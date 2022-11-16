@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <cmath>
 
 IDirect3DDevice9* Device = NULL;
 
@@ -115,23 +116,48 @@ public:
 		D3DXVECTOR3	shotPos = ball.getCenter();
 		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
 
+		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
+		float shotTan = vz / vx;
+
+		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
+		float collideTan = dz / dx;
+
+		float limitTan = -dz / dx;
+
 		if (dist < 0.42) {
-			if (shotPos.x < hitPos.x && shotPos.z < hitPos.z) {
-				ball.setPower(3 * (shotPos.z - hitPos.z) / dist, -3 * (shotPos.x - hitPos.x) / dist);
-				this->destroy();
+			if (dx > 0 && dz > 0) {
+				if (shotTan > collideTan || shotTan < limitTan) { 
+					ball.setPower(-dz / dist, dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(dz / dist, -dx / dist);
+				}
 			}
-			else if (shotPos.x > hitPos.x && shotPos.z < hitPos.z) {
-				ball.setPower(3 * -(shotPos.z - hitPos.z) / dist, 3 * (shotPos.x - hitPos.x) / dist);
-				this->destroy();
+			else if (dx < 0 && dz > 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dz / dist, -dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(-dz / dist, dx / dist);
+				}
 			}
-			else if (shotPos.x > hitPos.x && shotPos.z > hitPos.z) {
-				ball.setPower(3 * -(shotPos.z - hitPos.z) / dist, 3 * -(shotPos.x - hitPos.x) / dist);
-				this->destroy();
+			else if (dx > 0 && dz < 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dz / dist, dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(-dz / dist, -dx / dist);
+				}
 			}
 			else {
-				ball.setPower(3 * (shotPos.z - hitPos.z) / dist, 3 * (shotPos.x - hitPos.x) / dist);
-				this->destroy();
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dz / dist, dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(-dz / dist, -dx / dist);
+				}
 			}
+			this->destroy();
 		}
 	}
 
@@ -217,7 +243,103 @@ private:
 
 };
 
+class CHolderSphere : public CSphere{
 
+public:
+	bool hitBy(CSphere &ball) // ball은 shotPos
+	{ 
+		D3DXVECTOR3 hitPos = this->getCenter();
+		D3DXVECTOR3	shotPos = ball.getCenter();
+		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
+
+		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
+		//float shotTan = vz / vx;
+
+		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
+		//float collideTan = dz / dx;
+		//float limitTan = -dz / dx;
+
+		if (dist < 0.42) {
+			ball.setPower(dx / dist, -dz / dist);
+		}
+			/*
+			if (dx > 0 && dz > 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dx / dist, dz / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(dx / dist, -dx / dist);
+				}
+			}
+			else if (dx < 0 && dz > 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dz / dist, -dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(-dz / dist, dx / dist);
+				}
+			}
+			else if (dx > 0 && dz < 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dz / dist, dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(-dz / dist, -dx / dist);
+				}
+			}
+			else {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					ball.setPower(dz / dist, dx / dist);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					ball.setPower(-dz / dist, -dx / dist);
+				}
+			}
+			this->destroy();
+			
+		}
+		
+		/*
+		//const float TIME_SCALE = 3.3;
+		D3DXVECTOR3 cord = this->getCenter();
+		double vx = abs(this->getVelocity_X());
+		double vz = abs(this->getVelocity_Z());
+
+		if (vx > 0.01 || vz > 0.01)
+		{
+			float tX = cord.x + timeDiff * m_velocity_x;
+			float tZ = cord.z + timeDiff * m_velocity_z;
+
+			//correction of position of ball
+			// Please uncomment this part because this correction of ball position is necessary when a ball collides with a wall
+			if (tX >= (3 - M_RADIUS)) {
+				tX = 3 - M_RADIUS;
+				this->setPower(-getVelocity_X(), getVelocity_Z());
+			}
+			else if (tX <= (-3 + M_RADIUS)) {
+				tX = -3 + M_RADIUS;
+				this->setPower(-getVelocity_X(), getVelocity_Z());
+			}
+			else if (tZ >= (4.5 - M_RADIUS)) {
+				tZ = 4.5 - M_RADIUS;
+				this->setPower(getVelocity_X(), -getVelocity_Z());
+			}
+			else if (tZ <= (-4.5 + M_RADIUS)) { // 초기화 필요
+				tZ = -4.5 + M_RADIUS;
+				this->setPower(getVelocity_X(), -getVelocity_Z());
+			}
+
+			this->setCenter(tX, cord.y, tZ);
+		}
+		else { this->setPower(0, 0); }
+		//this->setPower(this->getVelocity_X() * DECREASE_RATE, this->getVelocity_Z() * DECREASE_RATE);
+		//double rate = 1 - (1 - DECREASE_RATE) * timeDiff * 400;
+		//if (rate < 0)
+		//	rate = 0;
+		this->setPower(getVelocity_X(), getVelocity_Z());
+		*/
+	}
+};
 
 // -----------------------------------------------------------------------------
 // CWall class definition
@@ -285,27 +407,17 @@ public:
 		return false;
 	}
 	
-	void hitBy(CSphere& ball)
+	bool hitBy(CSphere& ball)
 	{
 			
 		D3DXVECTOR3	shotPos = ball.getCenter();
 		double cur_velocity_x = ball.getVelocity_X();
 		double cur_velocity_z = ball.getVelocity_Z();
 
-
-		if (shotPos.x >= 2.79) { // 2.79
-			
+		if (shotPos.z <= -4.25) {
+			return true;
 		}
-		if (shotPos.x <= -2.79) { 
-			ball.setPower(-cur_velocity_x, cur_velocity_z);
-		}
-		
-		if (shotPos.z >= 4.29) { // 4.29
-			ball.setPower(cur_velocity_x, -cur_velocity_z);
-		}
-		if (shotPos.z <= -4.29) {
-			ball.setPower(cur_velocity_x, -cur_velocity_z);
-		}
+		return false;
 	}
 
 	void setPosition(float x, float y, float z)
@@ -425,7 +537,8 @@ CWall	g_legoPlane;
 CWall	g_legowall[4];
 CSphere	g_sphere[12];
 CSphere g_shotBall;
-CSphere g_holderBall;
+//CSphere g_holderBall;
+CHolderSphere	g_holderBall;
 CLight	g_light;
 
 double  g_camera_pos[3] = { 0.0, 10.0, -8.0 };
@@ -542,7 +655,10 @@ bool Display(float timeDelta)
 		// update the position of each ball. during update, check whether each ball hit by walls.
 		for (i = 0; i < 4; i++) {
 			g_shotBall.ballUpdate(timeDelta);
-			g_legowall[i].hitBy(g_shotBall);
+			if (g_legowall[i].hitBy(g_shotBall)) {
+				g_shotBall.setPower(0, 0);
+				g_shotBall.setCenter(g_holderBall.getCenter().x, (float)M_RADIUS, -3.88f);
+			}
 		}
 
 		// check whether any two balls hit together and update the direction of balls
