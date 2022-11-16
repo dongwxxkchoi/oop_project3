@@ -24,18 +24,31 @@ IDirect3DDevice9* Device = NULL;
 const int Width = 1024;
 const int Height = 768;
 
+// 0.42
 // There are four balls
 // initialize the position (coordinate) of each ball (ball0 ~ ball3)
 // const float spherePos[4][2] = { {-2.7f,0} , {+2.4f,0} , {3.3f,0} , {-2.7f,-0.9f} };
-const float spherePos[12][2] = { {-1.0f,0} , {-0.4f,0} , {0.4f,0} , {1.0f, 0}, 
-								{-1.4f, 1.0f}, {-1.8f, 1.2f}, {1.8f, 1.2f}, {1.4f, 1.0f},
-								{-2.2f, 2.0f}, {-2.6f, 2.4f}, {2.6f, 2.4f}, {-2.2f, 2.0f}};
-// initialize the color of each ball (ball0 ~ ball3)
-const D3DXCOLOR sphereColor[12] = { d3d::YELLOW, };
+const float spherePos[54][2] = { {-0.21f,-2.0f} , {-0.63f, -2.0f} , {0.63f, -2.0f} , {0.21f, -2.0f},
+								{-1.05f, -2.0f}, {-1.47f, -2.0f}, {1.47f, -2.0f}, {1.05f, -2.0f},
+								{-1.8f, -1.7f}, {-2.1f, -1.4f}, {2.1f, -1.4f}, {1.8f, -1.7f},
+								{-2.1f, -0.98f}, {-2.1f, -0.56f}, {2.1f, -0.56f}, {2.1f, -0.98f},
+								{-2.1f, -0.14f}, {-2.1f, 0.28f}, {2.1f, 0.28f}, {2.1f, -0.14f},
+								{-2.1f, 0.7f}, {-2.1f, 1.12f}, {2.1f, 1.12f}, {2.1f, 0.7f},
+								{-2.1f, 1.54f}, {-2.1f, 1.96f}, {2.1f, 1.96f}, {2.1f, 1.54f},
+								{-2.1f, 2.38f}, {-1.8f, 2.68f}, {1.8f, 2.68f}, {2.1f, 2.38f},
+								{-1.47f, 2.98f}, {-1.05f, 2.98f}, {1.05f, 2.98f}, {1.47f, 2.98f},
+								{-0.63f, 2.87f}, {-0.21f, 2.98f}, {0.21f, 2.98f}, {0.63f, 2.98f},
+								{-0.21f, -0.56f}, {-0.63f, -0.56f}, {0.63f, -0.56f}, {0.21f, -0.56f},
+								{-0.93f, -0.26f}, {-1.23f, 0.04f}, {1.23f, 0.04f}, {0.93f, -0.26f},
+								{-0.21f, 0.28f}, {-0.21f, 0.7f}, {-0.93f, 1.54f}, {-0.93f, 1.54f},
+								{0.93f, 1.96f}, {0.93f, 1.96f} };
+
+const D3DXCOLOR sphereColor = d3d::YELLOW;
 
 // -----------------------------------------------------------------------------
 // Transform matrices
 // -----------------------------------------------------------------------------
+
 D3DXMATRIX g_mWorld;
 D3DXMATRIX g_mView;
 D3DXMATRIX g_mProj;
@@ -110,6 +123,7 @@ public:
 		return false;
 	}
 
+	/*
 	void hitBy(CSphere& ball) // ball is shotPos
 	{
 		D3DXVECTOR3 hitPos = this->getCenter();
@@ -125,7 +139,7 @@ public:
 		float limitTan = -dz / dx;
 
 		if (dist < 0.42) {
-			if (dx > 0 && dz > 0) {
+			if (dx >= 0 && dz >= 0) {
 				if (shotTan > collideTan || shotTan < limitTan) { 
 					ball.setPower(-dz / dist, dx / dist);
 				}
@@ -133,7 +147,7 @@ public:
 					ball.setPower(dz / dist, -dx / dist);
 				}
 			}
-			else if (dx < 0 && dz > 0) {
+			else if (dx < 0 && dz >= 0) {
 				if (shotTan > collideTan || shotTan < limitTan) {
 					ball.setPower(dz / dist, -dx / dist);
 				}
@@ -141,21 +155,49 @@ public:
 					ball.setPower(-dz / dist, dx / dist);
 				}
 			}
-			else if (dx > 0 && dz < 0) {
+			else if (dx >= 0 && dz < 0) {
 				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, dx / dist);
+					ball.setPower(dz / dist, -dx / dist);
 				}
 				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, -dx / dist);
+					ball.setPower(-dz / dist, dx / dist);
 				}
 			}
 			else {
 				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, dx / dist);
+					ball.setPower(-dz / dist, dx / dist);
 				}
 				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, -dx / dist);
+					ball.setPower(dz / dist, -dx / dist);
 				}
+			}
+			this->destroy();
+		}
+	}
+	*/
+	void hitBy(CSphere& ball) // ball은 shotPos
+	{
+		D3DXVECTOR3 hitPos = this->getCenter();
+		D3DXVECTOR3	shotPos = ball.getCenter();
+		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
+
+		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
+
+		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
+
+		if (dist < 0.42) {
+			if (dx == 0) ball.setPower(0, 2);
+			else if (dx != 0) {
+				float shotTan;
+				if (vx == 0) shotTan = pow(10, 8);
+				else shotTan = vz / vx;
+
+				float collideTan = dz / dx;
+				double dbRadian = PI / 2 - (atan(collideTan) - atan(shotTan));
+				double dbDegree = floor((180 / PI) * dbRadian);
+				double newTan = tan(dbDegree);
+				double v = 2 / sqrt(1 + pow(newTan, 2));
+				ball.setPower(v, v * newTan);
 			}
 			this->destroy();
 		}
@@ -187,18 +229,11 @@ public:
 				tZ = 4.5 - M_RADIUS;
 				this->setPower(getVelocity_X(), -getVelocity_Z());
 			}
-			else if (tZ <= (-4.5 + M_RADIUS)) { // 초기화 필요
-				tZ = -4.5 + M_RADIUS;
-				this->setPower(getVelocity_X(), -getVelocity_Z());
-			}
-
+			
 			this->setCenter(tX, cord.y, tZ);
 		}
 		else { this->setPower(0, 0); }
-		//this->setPower(this->getVelocity_X() * DECREASE_RATE, this->getVelocity_Z() * DECREASE_RATE);
-		//double rate = 1 - (1 - DECREASE_RATE) * timeDiff * 400;
-		//if (rate < 0)
-		//	rate = 0;
+
 		this->setPower(getVelocity_X(), getVelocity_Z());
 	}
 
@@ -243,101 +278,37 @@ private:
 
 };
 
+
+
 class CHolderSphere : public CSphere{
 
 public:
-	bool hitBy(CSphere &ball) // ball은 shotPos
+	void hitBy(CSphere &ball, bool isShot) // ball은 shotPos
 	{ 
 		D3DXVECTOR3 hitPos = this->getCenter();
 		D3DXVECTOR3	shotPos = ball.getCenter();
 		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
 
 		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
-		//float shotTan = vz / vx;
 
 		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
-		//float collideTan = dz / dx;
-		//float limitTan = -dz / dx;
-
-		if (dist < 0.42) {
-			ball.setPower(dx / dist, -dz / dist);
-		}
-			/*
-			if (dx > 0 && dz > 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dx / dist, dz / dist);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(dx / dist, -dx / dist);
-				}
-			}
-			else if (dx < 0 && dz > 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, -dx / dist);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, dx / dist);
-				}
-			}
-			else if (dx > 0 && dz < 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, dx / dist);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, -dx / dist);
-				}
-			}
-			else {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, dx / dist);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, -dx / dist);
-				}
-			}
-			this->destroy();
-			
-		}
 		
-		/*
-		//const float TIME_SCALE = 3.3;
-		D3DXVECTOR3 cord = this->getCenter();
-		double vx = abs(this->getVelocity_X());
-		double vz = abs(this->getVelocity_Z());
+		if (dist < 0.42 && isShot) {
+			if (vx == 0) float shotTan = pow(10, 8);
+			if (dx == 0) ball.setPower(1, 1);
+			else if (dx != 0) {
+				float shotTan;
+				if (vx == 0) shotTan = pow(10, 8);
+				else shotTan = vz / vx;
 
-		if (vx > 0.01 || vz > 0.01)
-		{
-			float tX = cord.x + timeDiff * m_velocity_x;
-			float tZ = cord.z + timeDiff * m_velocity_z;
-
-			//correction of position of ball
-			// Please uncomment this part because this correction of ball position is necessary when a ball collides with a wall
-			if (tX >= (3 - M_RADIUS)) {
-				tX = 3 - M_RADIUS;
-				this->setPower(-getVelocity_X(), getVelocity_Z());
+				float collideTan = dz / dx;
+				double dbRadian = PI / 2 - (atan(collideTan) - atan(shotTan));
+				double dbDegree = floor((180 / PI) * dbRadian);
+				double newTan = tan(dbDegree);
+				double v = 2 / sqrt(1 + pow(newTan, 2));
+				ball.setPower(v, v * newTan);
 			}
-			else if (tX <= (-3 + M_RADIUS)) {
-				tX = -3 + M_RADIUS;
-				this->setPower(-getVelocity_X(), getVelocity_Z());
-			}
-			else if (tZ >= (4.5 - M_RADIUS)) {
-				tZ = 4.5 - M_RADIUS;
-				this->setPower(getVelocity_X(), -getVelocity_Z());
-			}
-			else if (tZ <= (-4.5 + M_RADIUS)) { // 초기화 필요
-				tZ = -4.5 + M_RADIUS;
-				this->setPower(getVelocity_X(), -getVelocity_Z());
-			}
-
-			this->setCenter(tX, cord.y, tZ);
 		}
-		else { this->setPower(0, 0); }
-		//this->setPower(this->getVelocity_X() * DECREASE_RATE, this->getVelocity_Z() * DECREASE_RATE);
-		//double rate = 1 - (1 - DECREASE_RATE) * timeDiff * 400;
-		//if (rate < 0)
-		//	rate = 0;
-		this->setPower(getVelocity_X(), getVelocity_Z());
-		*/
 	}
 };
 
@@ -414,7 +385,7 @@ public:
 		double cur_velocity_x = ball.getVelocity_X();
 		double cur_velocity_z = ball.getVelocity_Z();
 
-		if (shotPos.z <= -4.25) {
+		if (shotPos.z <= -8.25) {
 			return true;
 		}
 		return false;
@@ -534,12 +505,13 @@ private:
 // -----------------------------------------------------------------------------
 int		g_point;
 CWall	g_legoPlane;
-CWall	g_legowall[4];
-CSphere	g_sphere[12];
+CWall	g_legowall[3];
+CSphere	g_sphere[54];
 CSphere g_shotBall;
 //CSphere g_holderBall;
 CHolderSphere	g_holderBall;
 CLight	g_light;
+bool	isShot;
 
 double  g_camera_pos[3] = { 0.0, 10.0, -8.0 };
 
@@ -568,16 +540,16 @@ bool Setup()
 	// create walls and set the position. note that there are four walls
 	if (false == g_legowall[0].create(Device, -1, -1, 6, 0.3f, 0.12f, d3d::BLACK)) return false;
 	g_legowall[0].setPosition(0.0f, 0.12f, 4.56f); // up
-	if (false == g_legowall[1].create(Device, -1, -1, 6, 0.3f, 0.12f, d3d::BLUE)) return false;
-	g_legowall[1].setPosition(0.0f, 0.12f, -4.56f);
+	//if (false == g_legowall[1].create(Device, -1, -1, 6, 0.3f, 0.12f, d3d::BLUE)) return false;
+	//g_legowall[1].setPosition(0.0f, 0.12f, -4.56f);
+	if (false == g_legowall[1].create(Device, -1, -1, 0.12f, 0.3f, 9.24f, d3d::BLACK)) return false;
+	g_legowall[1].setPosition(3.06f, 0.12f, 0.0f); // right
 	if (false == g_legowall[2].create(Device, -1, -1, 0.12f, 0.3f, 9.24f, d3d::BLACK)) return false;
-	g_legowall[2].setPosition(3.06f, 0.12f, 0.0f); // right
-	if (false == g_legowall[3].create(Device, -1, -1, 0.12f, 0.3f, 9.24f, d3d::BLACK)) return false;
-	g_legowall[3].setPosition(-3.06f, 0.12f, 0.0f); // left
+	g_legowall[2].setPosition(-3.06f, 0.12f, 0.0f); // left
 
 	// create four balls and set the position
-	for (i = 0; i < 12; i++) {
-		if (false == g_sphere[i].create(Device, sphereColor[i])) return false;
+	for (i = 0; i < 54; i++) {
+		if (false == g_sphere[i].create(Device, sphereColor)) return false;
 		g_sphere[i].setCenter(spherePos[i][0], (float)M_RADIUS, spherePos[i][1]);
 		g_sphere[i].setPower(0, 0);
 	}
@@ -608,7 +580,7 @@ bool Setup()
 		return false;
 
 	// Position and aim the camera.
-	D3DXVECTOR3 pos(0.0f, 10.0f, -8.0f);
+	D3DXVECTOR3 pos(0.0f, 14.0f, -8.0f);
 	D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
 	D3DXVECTOR3 up(0.0f, 2.0f, 0.0f);
 	D3DXMatrixLookAtLH(&g_mView, &pos, &target, &up);
@@ -653,16 +625,19 @@ bool Display(float timeDelta)
 		Device->BeginScene();
 
 		// update the position of each ball. during update, check whether each ball hit by walls.
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 3; i++) {
 			g_shotBall.ballUpdate(timeDelta);
 			if (g_legowall[i].hitBy(g_shotBall)) {
 				g_shotBall.setPower(0, 0);
 				g_shotBall.setCenter(g_holderBall.getCenter().x, (float)M_RADIUS, -3.88f);
+				isShot = false;
 			}
 		}
 
+		g_holderBall.hitBy(g_shotBall, isShot);
+
 		// check whether any two balls hit together and update the direction of balls
-		for (i = 0; i < 12; i++) {
+		for (i = 0; i < 54; i++) {
 			if (!g_sphere[i].isNull()) g_sphere[i].hitBy(g_shotBall);
 			
 		}
@@ -671,11 +646,11 @@ bool Display(float timeDelta)
 
 		// draw plane, walls, and spheres
 		g_legoPlane.draw(Device, g_mWorld);
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 3; i++) {
 			g_legowall[i].draw(Device, g_mWorld);
 			//if (!g_sphere[i].isNull()) g_sphere[i].draw(Device, g_mWorld);
 		}
-		for (i = 0; i < 12; ++i) {
+		for (i = 0; i < 54; ++i) {
 			if (!g_sphere[i].isNull()) g_sphere[i].draw(Device, g_mWorld);
 		}
 		g_holderBall.draw(Device, g_mWorld);
@@ -717,8 +692,8 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case VK_SPACE:
-			g_shotBall.setPower(0, 3);
-
+			g_shotBall.setPower(0, 2);
+			isShot = true;
 			break;
 
 		}
@@ -773,7 +748,9 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				if (Coord3d.x + dx * (-0.007f) <= 2.79f && Coord3d.x + dx * (-0.007f) >= -2.79f) {
 					g_holderBall.setCenter(Coord3d.x + dx * (-0.007f), Coord3d.y, Coord3d.z);
-					g_shotBall.setCenter(Coord3d.x + dx * (-0.007f), Coord3d.y, Coord3d.z + 0.42f);
+					if (!isShot) {	
+						g_shotBall.setCenter(Coord3d.x + dx * (-0.007f), Coord3d.y, Coord3d.z + 0.42f);
+					}
 				}
 
 			}
