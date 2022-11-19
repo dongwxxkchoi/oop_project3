@@ -17,6 +17,8 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <iostream>
+using namespace std;
 
 IDirect3DDevice9* Device = NULL;
 
@@ -123,82 +125,62 @@ public:
 		return false;
 	}
 
-	/*
+	
 	void hitBy(CSphere& ball) // ball is shotPos
 	{
 		D3DXVECTOR3 hitPos = this->getCenter();
 		D3DXVECTOR3	shotPos = ball.getCenter();
-		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
-
+		float dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
 		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
-		float shotTan = vz / vx;
-
 		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
-		float collideTan = dz / dx;
-
-		float limitTan = -dz / dx;
 
 		if (dist < 0.42) {
+			float shotTan = 0.0f;
+			float collideTan = 0.0f;
+			float limitTan = 0.0f;
+			float dbRadian = 0.0f;
+
+			if (dx == 0) collideTan = pow(10, 8);
+			else collideTan = dz / dx;
+
+			limitTan = -1 / collideTan;
+
+			if (vx == 0) shotTan = pow(10, 8);
+			else shotTan = vz / vx;
+
 			if (dx >= 0 && dz >= 0) {
-				if (shotTan > collideTan || shotTan < limitTan) { 
-					ball.setPower(-dz / dist, dx / dist);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(dz / dist, -dx / dist);
-				}
+				dbRadian = PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 			}
 			else if (dx < 0 && dz >= 0) {
 				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, -dx / dist);
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 				}
 				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, dx / dist);
+					dbRadian = PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 				}
 			}
 			else if (dx >= 0 && dz < 0) {
 				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(dz / dist, -dx / dist);
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 				}
 				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(-dz / dist, dx / dist);
+					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
 				}
 			}
 			else {
 				if (shotTan > collideTan || shotTan < limitTan) {
-					ball.setPower(-dz / dist, dx / dist);
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 				}
 				else if (shotTan < collideTan && shotTan > limitTan) {
-					ball.setPower(dz / dist, -dx / dist);
+					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
 				}
 			}
-			this->destroy();
-		}
-	}
-	*/
-	void hitBy(CSphere& ball) // ball은 shotPos
-	{
-		D3DXVECTOR3 hitPos = this->getCenter();
-		D3DXVECTOR3	shotPos = ball.getCenter();
-		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
 
-		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
-
-		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
-
-		if (dist < 0.42) {
-			if (dx == 0) ball.setPower(0, 2);
-			else if (dx != 0) {
-				float shotTan;
-				if (vx == 0) shotTan = pow(10, 8);
-				else shotTan = vz / vx;
-
-				float collideTan = dz / dx;
-				double dbRadian = PI / 2 - (atan(collideTan) - atan(shotTan));
-				double dbDegree = floor((180 / PI) * dbRadian);
-				double newTan = tan(dbDegree);
-				double v = 2 / sqrt(1 + pow(newTan, 2));
-				ball.setPower(v, v * newTan);
-			}
+			double dbDegree = floor((180 / PI) * dbRadian);
+			double newTan = tan(dbDegree);
+			double v = 2 / sqrt(1 + pow(newTan, 2));
+			
+			ball.setPower(v, v * newTan);
 			this->destroy();
 		}
 	}
@@ -287,27 +269,59 @@ public:
 	{ 
 		D3DXVECTOR3 hitPos = this->getCenter();
 		D3DXVECTOR3	shotPos = ball.getCenter();
+
 		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
-
 		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
-
 		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
 		
-		if (dist < 0.42 && isShot) {
-			if (vx == 0) float shotTan = pow(10, 8);
-			if (dx == 0) ball.setPower(1, 1);
-			else if (dx != 0) {
-				float shotTan;
-				if (vx == 0) shotTan = pow(10, 8);
-				else shotTan = vz / vx;
+		if (dist < 0.42) {
+			ball.setPower(0, 0);
+			float shotTan = 0.0f;
+			float collideTan = 0.0f;
+			float limitTan = 0.0f;
+			float dbRadian = 0.0f;
 
-				float collideTan = dz / dx;
-				double dbRadian = PI / 2 - (atan(collideTan) - atan(shotTan));
-				double dbDegree = floor((180 / PI) * dbRadian);
-				double newTan = tan(dbDegree);
-				double v = 2 / sqrt(1 + pow(newTan, 2));
-				ball.setPower(v, v * newTan);
+			if (dx == 0) collideTan = pow(10, 8);
+			else collideTan = dz / dx;
+
+			limitTan = -1 / collideTan;
+
+			if (vx == 0) shotTan = pow(10, 8);
+			else shotTan = vz / vx;
+
+			if (dx >= 0 && dz >= 0) {
+				dbRadian = PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 			}
+			else if (dx < 0 && dz >= 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					dbRadian = PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				}
+			}
+			else if (dx >= 0 && dz < 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
+				}
+			}
+			else {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
+				}
+			}
+
+			double dbDegree = floor((180 / PI) * dbRadian);
+			double newTan = tan(dbDegree);
+			double v = 2 / sqrt(1 + pow(newTan, 2));
+
+			ball.setPower(v, v * newTan);
 		}
 	}
 };
@@ -503,6 +517,7 @@ private:
 // -----------------------------------------------------------------------------
 // Global variables
 // -----------------------------------------------------------------------------
+POINT ptMouse;
 int		g_point;
 CWall	g_legoPlane;
 CWall	g_legowall[3];
@@ -671,6 +686,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	static int old_x = 0;
 	static int old_z = 0;
 	static enum { WORLD_MOVE, LIGHT_MOVE, BLOCK_MOVE } move = WORLD_MOVE;
+	
 
 	switch (msg) {
 	case WM_DESTROY:
@@ -702,6 +718,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_MOUSEMOVE:
 	{
+
 		int new_x = LOWORD(lParam);
 		int new_z = HIWORD(lParam);
 		float dx;
@@ -739,8 +756,8 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		else {
 			isReset = true;
-
-			if (LOWORD(wParam) & MK_RBUTTON) {
+			//  & MK_RBUTTON
+			if (LOWORD(wParam)) {
 				dx = (old_x - new_x);// * 0.01f;
 				dz = (old_z - new_z);// * 0.01f;
 

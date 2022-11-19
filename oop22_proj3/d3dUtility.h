@@ -12,6 +12,7 @@
 
 #ifndef __d3dUtilityH__
 #define __d3dUtilityH__
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 
 #include <d3dx9.h>
 #include <string>
