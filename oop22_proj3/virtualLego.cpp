@@ -17,8 +17,6 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
-#include <iostream>
-using namespace std;
 
 IDirect3DDevice9* Device = NULL;
 
@@ -28,8 +26,7 @@ const int Height = 768;
 
 // 0.42
 // There are four balls
-// initialize the position (coordinate) of each ball (ball0 ~ ball3)
-// const float spherePos[4][2] = { {-2.7f,0} , {+2.4f,0} , {3.3f,0} , {-2.7f,-0.9f} };
+// initialize the position (coordinate) of each ball (ball0 ~ ball54)
 const float spherePos[54][2] = { {-0.21f,-2.0f} , {-0.63f, -2.0f} , {0.63f, -2.0f} , {0.21f, -2.0f},
 								{-1.05f, -2.0f}, {-1.47f, -2.0f}, {1.47f, -2.0f}, {1.05f, -2.0f},
 								{-1.8f, -1.7f}, {-2.1f, -1.4f}, {2.1f, -1.4f}, {1.8f, -1.7f},
@@ -42,8 +39,8 @@ const float spherePos[54][2] = { {-0.21f,-2.0f} , {-0.63f, -2.0f} , {0.63f, -2.0
 								{-0.63f, 2.87f}, {-0.21f, 2.98f}, {0.21f, 2.98f}, {0.63f, 2.98f},
 								{-0.21f, -0.56f}, {-0.63f, -0.56f}, {0.63f, -0.56f}, {0.21f, -0.56f},
 								{-0.93f, -0.26f}, {-1.23f, 0.04f}, {1.23f, 0.04f}, {0.93f, -0.26f},
-								{-0.21f, 0.28f}, {-0.21f, 0.7f}, {-0.93f, 1.54f}, {-0.93f, 1.54f},
-								{0.93f, 1.96f}, {0.93f, 1.96f} };
+								{-0.21f, 0.28f}, {-0.21f, 0.7f}, {-0.93f, 1.54f}, {-0.93f, 1.96f},
+								{0.93f, 1.54f}, {0.93f, 1.96f} };
 
 const D3DXCOLOR sphereColor = d3d::YELLOW;
 
@@ -120,12 +117,16 @@ public:
 
 	bool hasIntersected(CSphere& ball)
 	{
-		// Insert your code here.
+		D3DXVECTOR3 hitPos = this->getCenter();
+		D3DXVECTOR3	shotPos = ball.getCenter();
+		float dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
 
+		if (dist < 0.42) {
+			return true;
+		}
 		return false;
 	}
 
-	
 	void hitBy(CSphere& ball) // ball is shotPos
 	{
 		D3DXVECTOR3 hitPos = this->getCenter();
@@ -134,11 +135,17 @@ public:
 		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
 		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
 
-		if (dist < 0.42) {
+		if (dist <= 2 * M_RADIUS) {
 			float shotTan = 0.0f;
+			float shotAngle = 0.0f;
 			float collideTan = 0.0f;
+			float collideAngle = 0.0f;
 			float limitTan = 0.0f;
+			float limitAngle = 0.0f;
 			float dbRadian = 0.0f;
+			
+			collideAngle = atan2(dx, dz);
+			shotAngle = atan2(vx, vz);
 
 			if (dx == 0) collideTan = pow(10, 8);
 			else collideTan = dz / dx;
@@ -149,16 +156,36 @@ public:
 			else shotTan = vz / vx;
 
 			if (dx >= 0 && dz >= 0) {
-				dbRadian = PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				dbRadian = PI + 2 * collideAngle - shotAngle;
 			}
+			else if (dx < 0 && dz >= 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					dbRadian = PI - 2 * collideAngle + shotAngle;
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				}
+			}
+			/*
 			else if (dx < 0 && dz >= 0) {
 				if (shotTan > collideTan || shotTan < limitTan) {
 					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
 				}
 				else if (shotTan < collideTan && shotTan > limitTan) {
-					dbRadian = PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+					dbRadian = PI - 2 * atan2(dx, dz) + atan2(vx, vz);
 				}
 			}
+			*/
+			/*
+			else if (dx >= 0 && dz < 0) {
+				if (shotTan > collideTan || shotTan < limitTan) {
+					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				}
+				else if (shotTan < collideTan && shotTan > limitTan) {
+					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
+				}
+			}
+			*/
 			else if (dx >= 0 && dz < 0) {
 				if (shotTan > collideTan || shotTan < limitTan) {
 					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
@@ -187,7 +214,6 @@ public:
 
 	void ballUpdate(float timeDiff)
 	{
-		//const float TIME_SCALE = 3.3;
 		D3DXVECTOR3 cord = this->getCenter();
 		double vx = abs(this->getVelocity_X());
 		double vz = abs(this->getVelocity_Z());
@@ -197,13 +223,13 @@ public:
 			float tX = cord.x +  timeDiff * m_velocity_x;
 			float tZ = cord.z +  timeDiff * m_velocity_z;
 
-			//correction of position of ball
+			// correction of position of ball
 			// Please uncomment this part because this correction of ball position is necessary when a ball collides with a wall
 			if (tX >= (3 - M_RADIUS)) {
 				tX = 3 - M_RADIUS;
 				this->setPower(-getVelocity_X(), getVelocity_Z());
 			}
-			else if(tX <=(-3 + M_RADIUS)){
+			else if (tX <=(-3 + M_RADIUS)){
 				tX = -3 + M_RADIUS;
 				this->setPower(-getVelocity_X(), getVelocity_Z());
 			}
@@ -211,7 +237,6 @@ public:
 				tZ = 4.5 - M_RADIUS;
 				this->setPower(getVelocity_X(), -getVelocity_Z());
 			}
-			
 			this->setCenter(tX, cord.y, tZ);
 		}
 		else { this->setPower(0, 0); }
@@ -239,6 +264,7 @@ public:
 	float getRadius(void)  const { return (float)(M_RADIUS); }
 	const D3DXMATRIX& getLocalTransform(void) const { return m_mLocal; }
 	void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
+
 	D3DXVECTOR3 getCenter(void) const
 	{
 		D3DXVECTOR3 org(center_x, center_y, center_z);
@@ -253,6 +279,7 @@ public:
 			return true;
 		}
 	}
+
 private:
 	D3DXMATRIX              m_mLocal;
 	D3DMATERIAL9            m_mtrl;
@@ -260,11 +287,20 @@ private:
 
 };
 
-
-
 class CHolderSphere : public CSphere{
-
 public:
+	bool hasIntersected(CSphere& ball, bool isShot) {
+		D3DXVECTOR3 hitPos = this->getCenter();
+		D3DXVECTOR3	shotPos = ball.getCenter();
+		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
+		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
+
+		if (dist < 0.42) {
+			return true;
+		}
+		return false;
+	}
+
 	void hitBy(CSphere &ball, bool isShot) // ball은 shotPos
 	{ 
 		D3DXVECTOR3 hitPos = this->getCenter();
@@ -274,13 +310,13 @@ public:
 		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
 		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
 		
-		if (dist < 0.42) {
+		if (dist <= 0.42) {
 			ball.setPower(0, 0);
 			float shotTan = 0.0f;
 			float collideTan = 0.0f;
 			float limitTan = 0.0f;
 			float dbRadian = 0.0f;
-
+			
 			if (dx == 0) collideTan = pow(10, 8);
 			else collideTan = dz / dx;
 
@@ -320,6 +356,10 @@ public:
 			double dbDegree = floor((180 / PI) * dbRadian);
 			double newTan = tan(dbDegree);
 			double v = 2 / sqrt(1 + pow(newTan, 2));
+
+			if (this->hasIntersected(ball, isShot)) {
+				ball.setCenter(shotPos.x + v * 0.01, shotPos.y, shotPos.z + v * newTan * 0.01);
+			}
 
 			ball.setPower(v, v * newTan);
 		}
@@ -386,12 +426,11 @@ public:
 		m_pBoundMesh->DrawSubset(0);
 	}
 
-	bool hasIntersected(CSphere& ball)
+	bool hasIntersected(CSphere& ball) 
 	{
-		// Insert your code here.
-		return false;
+
 	}
-	
+
 	bool hitBy(CSphere& ball)
 	{
 			
@@ -416,8 +455,6 @@ public:
 	}
 
 	float getHeight(void) const { return M_HEIGHT; }
-
-
 
 private:
 	void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
@@ -517,13 +554,13 @@ private:
 // -----------------------------------------------------------------------------
 // Global variables
 // -----------------------------------------------------------------------------
+
 POINT ptMouse;
 int		g_point;
 CWall	g_legoPlane;
 CWall	g_legowall[3];
 CSphere	g_sphere[54];
 CSphere g_shotBall;
-//CSphere g_holderBall;
 CHolderSphere	g_holderBall;
 CLight	g_light;
 bool	isShot;
@@ -618,7 +655,7 @@ bool Setup()
 void Cleanup(void)
 {
 	g_legoPlane.destroy();
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 3; i++) {
 		g_legowall[i].destroy();
 	}
 	destroyAllLegoBlock();
@@ -650,6 +687,7 @@ bool Display(float timeDelta)
 		}
 
 		g_holderBall.hitBy(g_shotBall, isShot);
+		g_holderBall.setPower(0, 0);
 
 		// check whether any two balls hit together and update the direction of balls
 		for (i = 0; i < 54; i++) {
@@ -684,7 +722,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	static bool wire = false;
 	static bool isReset = true;
 	static int old_x = 0;
-	static int old_z = 0;
+	static int old_y = 0;
 	static enum { WORLD_MOVE, LIGHT_MOVE, BLOCK_MOVE } move = WORLD_MOVE;
 	
 
@@ -711,72 +749,29 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			g_shotBall.setPower(0, 2);
 			isShot = true;
 			break;
-
 		}
 		break;
 	}
-
-	case WM_MOUSEMOVE:
+	default:
 	{
-
-		int new_x = LOWORD(lParam);
-		int new_z = HIWORD(lParam);
+		GetCursorPos(&ptMouse);
+		int new_x = ptMouse.x;
+		int new_y = ptMouse.y;
 		float dx;
-		float dz;
+		float dy;
+		dx = (old_x - new_x);// * 0.01f;
+		dy = (old_y - new_y);// * 0.01f;
 
-		if (LOWORD(wParam) & MK_LBUTTON) {
-
-			if (isReset) {
-				isReset = false;
+		D3DXVECTOR3 Coord3d = g_holderBall.getCenter();
+		if (Coord3d.x + dx * (-0.01f) <= 2.79f && Coord3d.x + dx * (-0.01f) >= -2.79f) {
+			g_holderBall.setCenter(Coord3d.x + dx * (-0.01f), Coord3d.y, Coord3d.z);
+			if (!isShot) {	
+				g_shotBall.setCenter(Coord3d.x + dx * (-0.01f), Coord3d.y, Coord3d.z + 0.42f);
 			}
-			else {
-				D3DXVECTOR3 vDist;
-				D3DXVECTOR3 vTrans;
-				D3DXMATRIX mTrans;
-				D3DXMATRIX mX;
-				D3DXMATRIX mZ;
-
-				/*
-				switch (move) {
-				case WORLD_MOVE:
-					dx = (old_x - new_x) * 0.01f;
-					dy = (old_y - new_y) * 0.01f;
-					D3DXMatrixRotationY(&mX, dx);
-					D3DXMatrixRotationX(&mY, dy);
-					g_mWorld = g_mWorld * mX * mY;
-
-					break;
-				}
-				*/
-			}
-
-			old_x = new_x;
-			old_z = new_z;
-
 		}
-		else {
-			isReset = true;
-			//  & MK_RBUTTON
-			if (LOWORD(wParam)) {
-				dx = (old_x - new_x);// * 0.01f;
-				dz = (old_z - new_z);// * 0.01f;
-
-				D3DXVECTOR3 Coord3d = g_holderBall.getCenter();
-
-				if (Coord3d.x + dx * (-0.007f) <= 2.79f && Coord3d.x + dx * (-0.007f) >= -2.79f) {
-					g_holderBall.setCenter(Coord3d.x + dx * (-0.007f), Coord3d.y, Coord3d.z);
-					if (!isShot) {	
-						g_shotBall.setCenter(Coord3d.x + dx * (-0.007f), Coord3d.y, Coord3d.z + 0.42f);
-					}
-				}
-
-			}
-			old_x = new_x;
-			old_z = new_z;
-
-			move = WORLD_MOVE;
-		}
-		break;
+		old_x = new_x;
+		old_y = new_y;
+		move = WORLD_MOVE;
 	}
 	}
 
