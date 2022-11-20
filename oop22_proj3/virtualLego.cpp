@@ -131,83 +131,47 @@ public:
 	{
 		D3DXVECTOR3 hitPos = this->getCenter();
 		D3DXVECTOR3	shotPos = ball.getCenter();
-		float dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
-		float vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
-		float dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
+		double dist = sqrt(pow(shotPos.x - hitPos.x, 2) + pow(shotPos.z - hitPos.z, 2));
+		double vx = ball.getVelocity_X(); float vz = ball.getVelocity_Z();
+		double dx = hitPos.x - shotPos.x; float dz = hitPos.z - shotPos.z;
 
 		if (dist <= 2 * M_RADIUS) {
-			float shotTan = 0.0f;
-			float shotAngle = 0.0f;
-			float collideTan = 0.0f;
-			float collideAngle = 0.0f;
-			float limitTan = 0.0f;
-			float limitAngle = 0.0f;
-			float dbRadian = 0.0f;
-			
-			collideAngle = atan2(dx, dz);
-			shotAngle = atan2(vx, vz);
+			double shotDegree = 0.0;
+			double collideDegree = 0.0;
+			double newDegree = 0.0;
 
-			if (dx == 0) collideTan = pow(10, 8);
-			else collideTan = dz / dx;
-
-			limitTan = -1 / collideTan;
-
-			if (vx == 0) shotTan = pow(10, 8);
-			else shotTan = vz / vx;
+			collideDegree = floor((180 / PI) * ((int)(atan2(dx, dz) + 360) % 360));
+			shotDegree = floor((180 / PI) * ((int)(atan2(vx, vz) + 360) % 360));
 
 			if (dx >= 0 && dz >= 0) {
-				dbRadian = PI + 2 * collideAngle - shotAngle;
+				newDegree = 180 + 2 * collideDegree - shotDegree;
 			}
 			else if (dx < 0 && dz >= 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					dbRadian = PI - 2 * collideAngle + shotAngle;
+				if (collideDegree - 90 <= shotDegree && shotDegree < collideDegree) {
+					newDegree = -180 + 2 * collideDegree - shotDegree;
 				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
-				}
-			}
-			/*
-			else if (dx < 0 && dz >= 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					dbRadian = PI - 2 * atan2(dx, dz) + atan2(vx, vz);
+				else if (collideDegree <= shotDegree && shotDegree < collideDegree + 90){
+					newDegree = 180 - 2 * collideDegree + shotDegree;
 				}
 			}
-			*/
-			/*
 			else if (dx >= 0 && dz < 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				if (collideDegree - 90 <= shotDegree && shotDegree < collideDegree) {
+					newDegree = -180 + 2 * collideDegree - shotDegree;
 				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
-				}
-			}
-			*/
-			else if (dx >= 0 && dz < 0) {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
-				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
+				else{
+					newDegree = 2 * 180 - 2 * collideDegree + shotDegree;
+					
 				}
 			}
 			else {
-				if (shotTan > collideTan || shotTan < limitTan) {
-					dbRadian = -PI + 2 * atan2(dx, dz) - atan2(vx, vz);
+				if (collideDegree - 90 <= shotDegree && shotDegree < collideDegree) {
+					newDegree = -180 + 2 * collideDegree - shotDegree;
 				}
-				else if (shotTan < collideTan && shotTan > limitTan) {
-					dbRadian = 2 * PI - 2 * atan2(dx, dz) + atan2(vx, vz);
+				else{
+					newDegree = 2 * 180 - 2 * collideDegree + shotDegree;
 				}
 			}
-
-			double dbDegree = floor((180 / PI) * dbRadian);
-			double newTan = tan(dbDegree);
-			double v = 2 / sqrt(1 + pow(newTan, 2));
-			
-			ball.setPower(v, v * newTan);
+			ball.setPower(2 * cos(newDegree), 2 * sin(newDegree));
 			this->destroy();
 		}
 	}
@@ -805,4 +769,9 @@ int WINAPI WinMain(HINSTANCE hinstance,
 	Device->Release();
 
 	return 0;
+}
+
+double linearTransform(double x, double y, double angle) {
+	double lineTan = tan(angle);
+
 }
